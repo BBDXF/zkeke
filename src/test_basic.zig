@@ -1,11 +1,35 @@
 const std = @import("std");
 const comm = @import("comm.zig");
 const yoga = @import("yoga.zig");
+const qjs = @import("quickjs.zig");
 
 pub fn main() !void {
     // var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     // defer _ = gpa.deinit();
     // const allocator = gpa.allocator();
+
+    std.log.debug("Select the run case:", .{});
+    std.log.debug("1. yoga basic", .{});
+    std.log.debug("2. quickjs basic", .{});
+    std.log.debug("3. cairo basic", .{});
+    std.log.debug("4. windows basic", .{});
+    std.log.debug("----------------------------------\nInput your select: ", .{});
+    var select_id: [8]u8 = undefined;
+    _ = try std.io.getStdIn().reader().read(&select_id);
+    // std.log.debug("select id: {any}", .{select_id});
+
+    switch (select_id[0]) {
+        '1' => try testYogaBasic(),
+        '2' => try testQuickjsBasic(),
+        // '3' => try testCairoBasic(),
+        // '4' => try testWindowsBasic(),
+        else => {
+            std.log.debug("nothing...", .{});
+        },
+    }
+}
+
+fn testYogaBasic() !void {
     var node = yoga.Node.init();
     defer node.freeAll();
 
@@ -50,4 +74,10 @@ pub fn main() !void {
     // node2.calculateLayout(200, 200, .LTR);
     const style3 = node2.getComputedLayout();
     std.debug.print("node2: {s}\n", .{try style3.toJson()});
+}
+
+fn testQuickjsBasic() !void {
+    const app = qjs.Quickjs.init();
+    defer app.deinit();
+    std.log.debug("qjs app: {any}", .{app});
 }

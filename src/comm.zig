@@ -285,12 +285,6 @@ pub const KKLayoutUnitValue = struct {
 };
 
 // parse css value to unit and value
-// 50% -> (KKLayoutUnit.Percent, 50)
-// 50px -> (KKLayoutUnit.Point, 50)
-// auto -> (KKLayoutUnit.Auto, 0)
-// max-content -> (KKLayoutUnit.MaxContent, 0)
-// fit-content -> (KKLayoutUnit.FitContent, 0)
-// stretch -> (KKLayoutUnit.Stretch, 0)
 pub fn parseUnit(value: []const u8) KKLayoutUnitValue {
     var tmp = std.mem.trim(u8, value, " ");
     if (std.mem.endsWith(u8, tmp, "%")) {

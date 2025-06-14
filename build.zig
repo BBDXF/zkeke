@@ -1,11 +1,12 @@
 const std = @import("std");
-const build_yoga = @import("build-yoga.zig");
+const build_cpp = @import("build-cpp.zig");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const yoga_lib = build_yoga.BuildLibrary(b, target, optimize);
+    const yoga_lib = build_cpp.BuildYogaLibrary(b, target, optimize);
+    const qjs_lib = build_cpp.BuildQuickjsLibrary(b, target, optimize, true);
 
     const demo_basic_mod = b.createModule(.{
         .root_source_file = b.path("src/test_basic.zig"),
@@ -13,7 +14,9 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     demo_basic_mod.linkLibrary(yoga_lib);
+    demo_basic_mod.linkLibrary(qjs_lib);
     demo_basic_mod.addIncludePath(b.path("third-parts/yoga/"));
+    demo_basic_mod.addIncludePath(b.path("third-parts/quickjs/"));
 
     const demo_basic = b.addExecutable(.{
         .name = "demo_basic",
