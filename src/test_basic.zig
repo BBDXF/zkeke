@@ -79,5 +79,17 @@ fn testYogaBasic() !void {
 fn testQuickjsBasic() !void {
     const app = qjs.Quickjs.init();
     defer app.deinit();
-    std.log.debug("qjs app: {any}", .{app});
+
+    // run
+    _ = app.eval_js_code("console.log('hello world');", false);
+    _ = app.loop();
+    std.log.debug("-------------------------", .{});
+
+    // run file
+    const js_demo = @embedFile("test_basic.js");
+    _ = app.eval_js_code(js_demo, false);
+    _ = app.loop();
+
+    std.log.debug("---------------------------", .{});
+    std.log.debug("test_basic run finished.", .{});
 }
