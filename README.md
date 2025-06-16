@@ -7,7 +7,7 @@ draw all ui elements by software.
 how  to use:
 ```bash
 git clone https://github.com/BBDXF/zkeke.git --recursive-submodules
-
+git submodule update --init
 zig build
 ```
 
@@ -58,9 +58,10 @@ options are:
 ```
 
 # Note
+- add demo test basic functions
 - wrapper yoga cpp to zig struct and interface
 - wrapper quickjs-ng to zig struct and interface
-- use zig library cairo and wrapper 
+- wrapper cairo to zig struct and interface 
 - wrapper or design by self to build windows management
 
 

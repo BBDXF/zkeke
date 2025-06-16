@@ -2,6 +2,7 @@ const std = @import("std");
 const comm = @import("comm.zig");
 const yoga = @import("yoga.zig");
 const qjs = @import("quickjs.zig");
+const cairo = @import("cairo.zig");
 
 pub fn main() !void {
     // var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -21,7 +22,7 @@ pub fn main() !void {
     switch (select_id[0]) {
         '1' => try testYogaBasic(),
         '2' => try testQuickjsBasic(),
-        // '3' => try testCairoBasic(),
+        '3' => try testCairoBasic(),
         // '4' => try testWindowsBasic(),
         else => {
             std.log.debug("nothing...", .{});
@@ -92,4 +93,50 @@ fn testQuickjsBasic() !void {
 
     std.log.debug("---------------------------", .{});
     std.log.debug("test_basic run finished.", .{});
+}
+
+fn testCairoBasic() !void {
+    const sf = cairo.Surface.init(600, 400);
+    defer sf.deinit();
+    var cr = cairo.Context.init(&sf);
+    defer cr.deinit();
+    // quality
+    cr.setAntialias(6);
+    // background
+    cr.setSourceRGB(1.0, 1.0, 1.0);
+    cr.paint();
+    // line gradient
+    var grad = cairo.Gradient.initLinear(300.0, 0.0, 0.0, 300.0);
+    grad.addColorStop(0.0, 0.6, 0.0, 0.0, 1.0);
+    grad.addColorStop(1.0, 0.0, 1.0, 0.0, 1.0);
+    grad.rotate(std.math.pi * 2.0);
+    cr.setSource(&grad);
+    cr.paint();
+
+    // rect
+    cr.rectangle(50, 50, 100, 100);
+    cr.setSourceRGB(0.5, 0.5, 0.0);
+    cr.fillPreserve();
+    cr.setSourceRGB(1.0, 0.0, 0.0);
+    cr.setLineWidth(2.0);
+    cr.stroke();
+    // path
+    cr.setSourceRGB(0.0, 0.0, 1.0);
+    cr.setLineWidth(2.0);
+    cr.moveTo(200, 50);
+    cr.lineTo(250, 150);
+    cr.lineTo(50, 190);
+    cr.closePath();
+    cr.stroke();
+
+    // font
+    cr.setSourceRGB(0.8, 0.0, 0.6);
+    cr.moveTo(50, 220);
+    // cr.selectFontFace("Sans", 0, 0);
+    cr.setFontSize(18);
+    cr.showText("Hello World!");
+
+    // write
+    _ = sf.writeToPng("test.png");
+    std.debug.print("Wrote test.png\n", .{});
 }

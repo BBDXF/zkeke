@@ -43,7 +43,7 @@ pub const Quickjs = struct {
     }
 
     pub fn eval_js_binary(self: Self, data: []const u8) void {
-        const c_data: [*c]const u8 = @ptrCast(data);
+        const c_data: [*c]const u8 = @ptrCast(data.ptr);
         qjs_lib.js_std_eval_binary(self.ctx, c_data, data.len, 0);
     }
 
@@ -84,8 +84,8 @@ pub const Quickjs = struct {
         }
         var val: qjs_lib.JSValue = undefined;
         var ret: i32 = 0;
-        const c_buf: [*c]const u8 = @ptrCast(buf);
-        const c_filename: [*c]const u8 = @ptrCast(filename);
+        const c_buf: [*c]const u8 = @ptrCast(buf.ptr);
+        const c_filename: [*c]const u8 = @ptrCast(filename.ptr);
         if ((flags & qjs_lib.JS_EVAL_TYPE_MASK) == qjs_lib.JS_EVAL_TYPE_MODULE) {
             val = qjs_lib.JS_Eval(ctx, c_buf, buf.len, c_filename, flags | qjs_lib.JS_EVAL_FLAG_COMPILE_ONLY);
             if (!qjs_lib.JS_IsException(val)) {
@@ -120,7 +120,7 @@ pub const Quickjs = struct {
             return -1;
         }
         var buf_len: c_int = 0;
-        const c_filename: [*c]const u8 = @ptrCast(filename);
+        const c_filename: [*c]const u8 = @ptrCast(filename.ptr);
         const buf = qjs_lib.js_load_file(ctx, &buf_len, c_filename);
         if (buf == null) {
             std.log.warn("load file {} failed", .{filename});
