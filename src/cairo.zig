@@ -62,9 +62,13 @@ pub const Context = struct {
     pub fn translate(self: *Self, x: f64, y: f64) void {
         c.cairo_translate(self.cr, x, y);
     }
+    pub fn clip(self: *Self) void {
+        c.cairo_clip(self.cr);
+    }
     pub fn rotate(self: *Self, angle: f64) void {
         c.cairo_rotate(self.cr, angle);
     }
+    // basic
     pub fn setOperation(self: *Self, op: c.cairo_operator_t) void {
         c.cairo_set_operator(self.cr, op);
     }
@@ -98,6 +102,14 @@ pub const Context = struct {
     pub fn arc(self: *Self, x: f64, y: f64, radius: f64, angle1: f64, angle2: f64) void {
         c.cairo_arc(self.cr, x, y, radius, angle1, angle2);
     }
+    // surface
+    pub fn setSurface(self: *Self, surface: *Surface, x: f64, y: f64) void {
+        c.cairo_set_source_surface(self.cr, surface.surface, x, y);
+    }
+    pub fn maskSurface(self: *Self, surface: *Surface, x: f64, y: f64) void {
+        c.cairo_mask_surface(self.cr, surface.surface, x, y);
+    }
+    // actions
     pub fn fill(self: *Self) void {
         c.cairo_fill(self.cr);
     }
@@ -144,8 +156,10 @@ pub const Context = struct {
     }
 
     // text
-    pub fn selectFontFace(self: *Self, family: []const u8, slant: u32, weight: u32) void {
+    pub fn selectFontFace(self: *Self, family: []const u8, isItalic: bool, isBold: bool) void {
         const family_c: [*c]const u8 = @ptrCast(family.ptr);
+        const weight = if (isBold) c.CAIRO_FONT_WEIGHT_BOLD else c.CAIRO_FONT_WEIGHT_NORMAL;
+        const slant = if (isItalic) c.CAIRO_FONT_SLANT_ITALIC else c.CAIRO_FONT_SLANT_NORMAL;
         c.cairo_select_font_face(self.cr, family_c, slant, weight);
     }
     pub fn setFontSize(self: *Self, size: f64) void {
@@ -160,8 +174,8 @@ pub const Context = struct {
         c.cairo_text_extents(self.cr, utf8_c, extents);
     }
     pub fn textPath(self: *Self, utf8: []const u8) void {
-        const utf8_c: [*c]const u8 = @ptrCast(utf8);
-        c.cairo_text_path(self.cr, utf8_c.ptr);
+        const utf8_c: [*c]const u8 = @ptrCast(utf8.ptr);
+        c.cairo_text_path(self.cr, utf8_c);
     }
     pub fn showText(self: *Self, utf8: []const u8) void {
         const utf8_c: [*c]const u8 = @ptrCast(utf8.ptr);
@@ -192,6 +206,16 @@ pub const Gradient = struct {
     pub fn initColor(r: f64, g: f64, b: f64, a: f64) Self {
         return Self{
             .pat = c.cairo_pattern_create_rgba(r, g, b, a),
+        };
+    }
+    pub fn initSurface(surface: *Surface) Self {
+        return Self{
+            .pat = c.cairo_pattern_create_for_surface(surface.surface),
+        };
+    }
+    pub fn initRef(target: *Self) Self {
+        return Self{
+            .pat = c.cairo_pattern_reference(target.pat),
         };
     }
     pub fn deinit(self: *Self) void {
