@@ -3,3 +3,4 @@
 zig-out
 third_party/
 .vscode
+third-parts/*/

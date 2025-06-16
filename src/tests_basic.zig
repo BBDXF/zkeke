@@ -87,12 +87,12 @@ fn testQuickjsBasic() !void {
     std.log.debug("-------------------------", .{});
 
     // run file
-    const js_demo = @embedFile("test_basic.js");
+    const js_demo = @embedFile("tests_basic.js");
     _ = app.eval_js_code(js_demo, false);
     _ = app.loop();
 
     std.log.debug("---------------------------", .{});
-    std.log.debug("test_basic run finished.", .{});
+    std.log.debug("tests_basic run finished.", .{});
 }
 
 fn testCairoBasic() !void {
