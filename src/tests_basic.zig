@@ -3,11 +3,11 @@ const comm = @import("comm.zig");
 const yoga = @import("yoga.zig");
 const qjs = @import("quickjs.zig");
 const cairo = @import("cairo.zig");
-
+const wm = @import("window_win32.zig");
 pub fn main() !void {
-    // var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    // defer _ = gpa.deinit();
-    // const allocator = gpa.allocator();
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
     std.log.debug("Select the run case:", .{});
     std.log.debug("1. yoga basic", .{});
@@ -20,17 +20,18 @@ pub fn main() !void {
     // std.log.debug("select id: {any}", .{select_id});
 
     switch (select_id[0]) {
-        '1' => try testYogaBasic(),
-        '2' => try testQuickjsBasic(),
-        '3' => try testCairoBasic(),
-        // '4' => try testWindowsBasic(),
+        '1' => try testYogaBasic(allocator),
+        '2' => try testQuickjsBasic(allocator),
+        '3' => try testCairoBasic(allocator),
+        '4' => try testWindowsBasic(allocator),
         else => {
             std.log.debug("nothing...", .{});
         },
     }
 }
 
-fn testYogaBasic() !void {
+fn testYogaBasic(allocator: std.mem.Allocator) !void {
+    _ = allocator;
     var node = yoga.Node.init();
     defer node.freeAll();
 
@@ -77,7 +78,8 @@ fn testYogaBasic() !void {
     std.debug.print("node2: {s}\n", .{try style3.toJson()});
 }
 
-fn testQuickjsBasic() !void {
+fn testQuickjsBasic(allocator: std.mem.Allocator) !void {
+    _ = allocator;
     const app = qjs.Quickjs.init();
     defer app.deinit();
 
@@ -95,7 +97,8 @@ fn testQuickjsBasic() !void {
     std.log.debug("tests_basic run finished.", .{});
 }
 
-fn testCairoBasic() !void {
+fn testCairoBasic(allocator: std.mem.Allocator) !void {
+    _ = allocator;
     const sf = cairo.Surface.init(600, 400);
     defer sf.deinit();
     var cr = cairo.Context.init(&sf);
@@ -139,4 +142,13 @@ fn testCairoBasic() !void {
     // write
     _ = sf.writeToPng("test.png");
     std.debug.print("Wrote test.png\n", .{});
+}
+
+fn testWindowsBasic(allocator: std.mem.Allocator) !void {
+    wm.appInit();
+    defer wm.appDeinit();
+
+    var wnd = wm.Window.init(allocator, 600, 400) orelse return;
+    defer wnd.deinit();
+    wm.appRun();
 }
