@@ -131,7 +131,7 @@ pub const Window = struct {
         // set window user data
         const ptr: usize = @intFromPtr(win);
         gWinMap.put(ptr, win) catch {};
-        _ = c.SetWindowLongPtrA(hWnd, c.GWLP_USERDATA, @intCast(ptr));
+        // _ = c.SetWindowLongPtrA(hWnd, c.GWLP_USERDATA, @intCast(ptr));
 
         return win;
     }
