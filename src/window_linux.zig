@@ -4,8 +4,8 @@ const c = @cImport({
     @cInclude("X11/Xutil.h");
 });
 
-const gDisplay: ?*c.Display = undefined;
-const gScreen: ?*c.Screen = undefined;
+var gDisplay: ?*c.Display = undefined;
+var gScreen: ?*c.Screen = undefined;
 var gWinMap = std.AutoHashMap(usize, *Window).init(std.heap.page_allocator);
 
 pub fn appInit() void {
@@ -14,7 +14,8 @@ pub fn appInit() void {
         std.log.err("Open Display error!", .{});
         return;
     }
-    gScreen = c.DefaultScreen(gDisplay);
+    const ptr: usize = @intCast(c.DefaultScreen(gDisplay));
+    gScreen = @ptrFromInt(ptr);
 }
 pub fn appDeinit() void {}
 
@@ -22,8 +23,8 @@ pub fn appQuit() void {}
 
 pub fn appRun() void {
     var event: c.XEvent = undefined;
-    while (1) {
-        c.XNextEvent(gDisplay, &event);
+    while (true) {
+        _ = c.XNextEvent(gDisplay, &event);
         switch (event.type) {
             c.ButtonPress => {
                 std.log.debug("{d} ({d},{d})", .{ event.xbutton.button, event.xbutton.x, event.xbutton.y });
@@ -37,32 +38,32 @@ pub fn appRun() void {
 
 pub const Window = struct {
     hWnd: c.Window,
-    width: i32,
-    height: i32,
+    width: u32,
+    height: u32,
     allocator: std.mem.Allocator,
 
     const Self = @This();
-    pub fn init(allocator: std.mem.Allocator, width: i32, height: i32) ?*Self {
-        const fw = c.DisplayWidth(gDisplay, gScreen);
-        const fh = c.DisplayHeight(gDisplay, gScreen);
+    pub fn init(allocator: std.mem.Allocator, width: u32, height: u32) ?*Self {
+        const fw: i32 = 100; // c.DisplayWidth(gDisplay, gScreen);
+        const fh: i32 = 100; //c.DisplayHeight(gDisplay, gScreen);
         const hWnd = c.XCreateSimpleWindow(
             gDisplay,
             c.DefaultRootWindow(gDisplay),
-            (fw - width) / 2,
-            (fh - height) / 2,
+            fw,
+            fh,
             width,
             height,
             2,
-            c.BlackPixel(gDisplay, gScreen),
-            c.WhitePixel(gDisplay, gScreen),
+            0,
+            0,
         );
-        c.XStoreName(gDisplay, hWnd, "Zkeke window");
+        _ = c.XStoreName(gDisplay, hWnd, "Zkeke window");
         var flags = c.ButtonPressMask | c.ButtonReleaseMask | c.ButtonMotionMask;
         flags |= c.PointerMotionMask | c.PointerMotionHintMask;
         flags |= c.EnterWindowMask | c.LeaveWindowMask;
         flags |= c.StructureNotifyMask | c.ExposureMask;
-        c.XSelectInput(gDisplay, hWnd, flags);
-        c.XMapWindow(gDisplay, hWnd);
+        _ = c.XSelectInput(gDisplay, hWnd, flags);
+        _ = c.XMapWindow(gDisplay, hWnd);
 
         const win = allocator.create(Self) catch return null;
         win.* = Self{
@@ -72,7 +73,10 @@ pub const Window = struct {
             .allocator = allocator,
         };
 
-        gWinMap.put(hWnd, win);
+        gWinMap.put(hWnd, win) catch return null;
+        return win;
     }
-    pub fn deinit() void {}
+    pub fn deinit(self: *Self) void {
+        _ = self;
+    }
 };

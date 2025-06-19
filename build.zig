@@ -52,6 +52,10 @@ pub fn build(b: *std.Build) void {
             .needed = true,
             .use_pkg_config = .force,
         });
+        tests_basic_mod.linkSystemLibrary("X11", .{
+            .needed = true,
+            .use_pkg_config = .yes,
+        });
     }
 
     const tests_basic = b.addExecutable(.{

@@ -1,9 +1,16 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const comm = @import("comm.zig");
 const yoga = @import("yoga.zig");
 const qjs = @import("quickjs.zig");
 const cairo = @import("cairo.zig");
-const wm = @import("window_win32.zig");
+const wm =
+    // if (builtin.target.os.tag == .windows) {
+    //     @import("window_win32.zig");
+    // } else {
+    @import("window_linux.zig");
+// };
+
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
