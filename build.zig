@@ -52,6 +52,7 @@ pub fn build(b: *std.Build) void {
             .needed = true,
             .use_pkg_config = .force,
         });
+        // sudo apt install libX11-dev
         tests_basic_mod.linkSystemLibrary("X11", .{
             .needed = true,
             .use_pkg_config = .yes,
