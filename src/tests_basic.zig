@@ -6,9 +6,9 @@ const qjs = @import("quickjs.zig");
 const cairo = @import("cairo.zig");
 const wm =
     // if (builtin.target.os.tag == .windows) {
-    //     @import("window_win32.zig");
-    // } else {
-    @import("window_linux.zig");
+    @import("window_win32.zig");
+// } else {
+// @import("window_linux.zig");
 // };
 
 pub fn main() !void {

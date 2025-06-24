@@ -3,23 +3,58 @@ const c = @cImport({
     @cDefine("WIN32_LEAN_AND_MEAN", "1");
     @cDefine("_WIN32_WINNT", "0x0601");
     @cInclude("windows.h");
+    @cInclude("windowsx.h");
 });
 
 const ZKEKE_CLASS_NAME = "ZkekeWindowClass";
 var gInstance: c.HINSTANCE = undefined;
 var gWinMap = std.AutoHashMap(usize, *Window).init(std.heap.page_allocator);
 
+fn myNativeMouseEvent(uMsg: u32, wParam: c.WPARAM, lParam: c.LPARAM) Events {
+    const x: i32 = @intCast(0xFFFF & lParam);
+    const y: i32 = @intCast(lParam >> 16);
+    const btn: u32 = @intCast(0xFFFF & wParam);
+    const delta: i32 = @intCast(wParam >> 16);
+    switch (uMsg) {
+        c.WM_RBUTTONDOWN, c.WM_LBUTTONDOWN, c.WM_MBUTTONDOWN => {
+            return Events{ .MouseDown = .{ .x = x, .y = y, .button = btn } };
+        },
+        c.WM_RBUTTONUP, c.WM_LBUTTONUP, c.WM_MBUTTONUP => {
+            return Events{ .MouseUp = .{ .x = x, .y = y, .button = btn } };
+        },
+        c.WM_MOUSEMOVE => {
+            return Events{ .MouseMove = .{ .x = x, .y = y } };
+        },
+        c.WM_MOUSEHWHEEL => {
+            return Events{ .MouseWheel = .{ .x = x, .y = y, .button = btn, .delta = delta } };
+        },
+        else => {
+            unreachable;
+        },
+    }
+}
+
 fn myWndProc(hWnd: c.HWND, uMsg: u32, wParam: c.WPARAM, lParam: c.LPARAM) callconv(.winapi) c.LRESULT {
     const ptr = @intFromPtr(hWnd);
     if (gWinMap.get(ptr)) |win| {
+        // std.log.info("myWndProc: {d}", .{uMsg});
         // check quit and translate message
         switch (uMsg) {
-            c.WM_DESTROY => {},
+            c.WM_DESTROY => {
+                const ev = Events{ .Destroy = {} };
+                _ = win.onMessage(ev);
+                _ = gWinMap.remove(ptr);
+                if (gWinMap.count() == 0) {
+                    appQuit();
+                    return 1;
+                }
+            },
+            c.WM_RBUTTONDOWN, c.WM_LBUTTONDOWN, c.WM_MBUTTONDOWN, c.WM_RBUTTONUP, c.WM_LBUTTONUP, c.WM_MBUTTONUP, c.WM_MOUSEHWHEEL => {
+                const ev = myNativeMouseEvent(uMsg, wParam, lParam);
+                _ = win.onMessage(ev);
+            },
             else => {},
         }
-        // call onMessage
-        const ev: Events = .{ .Create = {} };
-        _ = win.onMessage(ev);
     }
     return c.DefWindowProcA(hWnd, uMsg, wParam, lParam);
 }
@@ -82,9 +117,19 @@ pub const Events = union(enum) {
         y: i32,
         button: u32,
     },
-    MouseUp,
-    MouseMove,
+    MouseUp: struct {
+        x: i32,
+        y: i32,
+        button: u32,
+    },
+    MouseMove: struct {
+        x: i32,
+        y: i32,
+    },
     MouseWheel: struct {
+        x: i32,
+        y: i32,
+        button: u32,
         delta: i32,
     },
 };
@@ -129,9 +174,12 @@ pub const Window = struct {
         };
 
         // set window user data
-        const ptr: usize = @intFromPtr(win);
+        const ptr: usize = @intFromPtr(hWnd);
         gWinMap.put(ptr, win) catch {};
-        // _ = c.SetWindowLongPtrA(hWnd, c.GWLP_USERDATA, @intCast(ptr));
+
+        // call create event
+        const ev: Events = .{ .Create = {} };
+        _ = win.onMessage(ev);
 
         return win;
     }
@@ -140,10 +188,25 @@ pub const Window = struct {
         _ = c.DestroyWindow(self.hWnd);
         self.allocator.destroy(self);
     }
+    pub fn setTitle(self: *Self, title: []const u8) void {
+        const title_c: [*c]const u8 = @ptrCast(title.ptr);
+        _ = c.SetWindowTextA(self.hWnd, title_c);
+    }
 
     pub fn onMessage(self: *Self, ev: Events) bool {
-        _ = self;
-        _ = ev;
+        const ptr: usize = @intFromPtr(self.hWnd);
+        switch (ev) {
+            .Create => {
+                std.log.info("win: {d}, create", .{ptr});
+            },
+            .Destroy => {
+                std.log.info("win: {d}, destroy", .{ptr});
+            },
+            .MouseDown => |info| {
+                std.log.info("win: {d}, mouse down: {d}, {d}, button: {d}", .{ ptr, info.x, info.y, info.button });
+            },
+            else => {},
+        }
         return true;
     }
 };
