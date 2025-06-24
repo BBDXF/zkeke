@@ -16,15 +16,15 @@ pub fn main() !void {
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
 
-    std.log.debug("Select the run case:", .{});
-    std.log.debug("1. yoga basic", .{});
-    std.log.debug("2. quickjs basic", .{});
-    std.log.debug("3. cairo basic", .{});
-    std.log.debug("4. windows basic", .{});
-    std.log.debug("----------------------------------\nInput your select: ", .{});
+    std.log.info("Select the run case:", .{});
+    std.log.info("1. yoga basic", .{});
+    std.log.info("2. quickjs basic", .{});
+    std.log.info("3. cairo basic", .{});
+    std.log.info("4. windows basic", .{});
+    std.log.info("----------------------------------\nInput your select: ", .{});
     var select_id: [8]u8 = undefined;
     _ = try std.io.getStdIn().reader().read(&select_id);
-    // std.log.debug("select id: {any}", .{select_id});
+    // std.log.info("select id: {any}", .{select_id});
 
     switch (select_id[0]) {
         '1' => try testYogaBasic(allocator),
@@ -32,7 +32,7 @@ pub fn main() !void {
         '3' => try testCairoBasic(allocator),
         '4' => try testWindowsBasic(allocator),
         else => {
-            std.log.debug("nothing...", .{});
+            std.log.info("nothing...", .{});
         },
     }
 }
@@ -72,17 +72,17 @@ fn testYogaBasic(allocator: std.mem.Allocator) !void {
     node.calculateLayout(400, 200, .LTR);
 
     const style = node.getComputedLayout();
-    std.debug.print("node: {s}\n", .{try style.toJson()});
+    std.log.info("node: {s}\n", .{try style.toJson()});
 
     const style1 = child1.getComputedLayout();
-    std.debug.print("child1: {s}\n", .{try style1.toJson()});
+    std.log.info("child1: {s}\n", .{try style1.toJson()});
 
     const style2 = child2.getComputedLayout();
-    std.debug.print("child2: {s}\n", .{try style2.toJson()});
+    std.log.info("child2: {s}\n", .{try style2.toJson()});
 
     // node2.calculateLayout(200, 200, .LTR);
     const style3 = node2.getComputedLayout();
-    std.debug.print("node2: {s}\n", .{try style3.toJson()});
+    std.log.info("node2: {s}\n", .{try style3.toJson()});
 }
 
 fn testQuickjsBasic(allocator: std.mem.Allocator) !void {
@@ -93,15 +93,15 @@ fn testQuickjsBasic(allocator: std.mem.Allocator) !void {
     // run
     _ = app.eval_js_code("console.log('hello world');", false);
     _ = app.loop();
-    std.log.debug("-------------------------", .{});
+    std.log.info("-------------------------", .{});
 
     // run file
     const js_demo = @embedFile("tests_basic.js");
     _ = app.eval_js_code(js_demo, false);
     _ = app.loop();
 
-    std.log.debug("---------------------------", .{});
-    std.log.debug("tests_basic run finished.", .{});
+    std.log.info("---------------------------", .{});
+    std.log.info("tests_basic run finished.", .{});
 }
 
 fn testCairoBasic(allocator: std.mem.Allocator) !void {
@@ -148,7 +148,7 @@ fn testCairoBasic(allocator: std.mem.Allocator) !void {
 
     // write
     _ = sf.writeToPng("test.png");
-    std.debug.print("Wrote test.png\n", .{});
+    std.log.info("Wrote test.png\n", .{});
 }
 
 fn testWindowsBasic(allocator: std.mem.Allocator) !void {

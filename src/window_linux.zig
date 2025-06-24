@@ -42,7 +42,7 @@ pub fn appRun() void {
                 }
             },
             c.ButtonPress => {
-                std.log.debug("{d} ({d},{d})", .{ event.xbutton.button, event.xbutton.x, event.xbutton.y });
+                std.log.info("{d} ({d},{d})", .{ event.xbutton.button, event.xbutton.x, event.xbutton.y });
             },
             c.ButtonRelease => {},
             c.MotionNotify => {},
@@ -106,6 +106,6 @@ pub const Window = struct {
         _ = c.XStoreName(gDisplay, self.hWnd, title_ptr);
     }
     pub fn onMessage(self: *Self, ev: anytype) void {
-        std.log.debug("onMessage: {d} {any}", .{ self.hWnd, ev });
+        std.log.info("onMessage: {d} {any}", .{ self.hWnd, ev });
     }
 };

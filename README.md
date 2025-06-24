@@ -6,7 +6,7 @@ draw all ui elements by software.
 
 how  to use:
 ```bash
-git clone https://github.com/BBDXF/zkeke.git --recursive-submodules
+git clone https://github.com/BBDXF/zkeke.git --recursive
 git submodule update --init
 zig build
 ```
