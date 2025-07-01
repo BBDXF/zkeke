@@ -5,27 +5,59 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    // yoga
+    // c/cpp library
     const yoga_lib = build_cpp.BuildYogaLibrary(b, target, optimize);
-    // quickjs
     const qjs_lib = build_cpp.BuildQuickjsLibrary(b, target, optimize, true);
 
-    const tests_basic_mod = b.createModule(.{
-        .root_source_file = b.path("src/tests_basic.zig"),
+    // output module
+    const zkk_lib_mod = b.createModule(.{
+        .root_source_file = b.path("src/zkeke.zig"),
         .target = target,
         .optimize = optimize,
     });
-    tests_basic_mod.linkLibrary(yoga_lib);
-    tests_basic_mod.linkLibrary(qjs_lib);
-    tests_basic_mod.addIncludePath(b.path("third-parts/yoga/"));
-    tests_basic_mod.addIncludePath(b.path("third-parts/quickjs/"));
 
+    // internal use modules
+    // yoga
+    const zkk_yoga_mod = b.createModule(.{
+        .root_source_file = b.path("src/yoga.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    zkk_yoga_mod.linkLibrary(yoga_lib);
+    zkk_yoga_mod.addIncludePath(b.path("third-parts/yoga/"));
+    zkk_lib_mod.addImport("yoga", zkk_yoga_mod);
+    // quickjs
+    const zkk_quickjs_mod = b.createModule(.{
+        .root_source_file = b.path("src/quickjs.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    zkk_quickjs_mod.linkLibrary(qjs_lib);
+    zkk_quickjs_mod.addIncludePath(b.path("third-parts/quickjs/"));
+    zkk_lib_mod.addImport("quickjs", zkk_quickjs_mod);
+    // window
+    const zkk_window_mod = b.createModule(.{
+        // .root_source_file = b.path("src/window.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    if (target.result.os.tag == .windows) {
+        zkk_window_mod.root_source_file = b.path("src/window/win32.zig");
+    } else {
+        zkk_window_mod.root_source_file = b.path("src/window/linux.zig");
+    }
+    zkk_lib_mod.addImport("window", zkk_window_mod);
     // cairo
+    const zkk_cairo_mod = b.createModule(.{
+        .root_source_file = b.path("src/cairo.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
     if (target.result.os.tag == .windows) {
         // downlaod pre-compiled cairo from https://github.com/BBDXF/cairo-win32/releases
-        tests_basic_mod.addIncludePath(b.path("third-parts/cairo/include"));
-        tests_basic_mod.addLibraryPath(b.path("third-parts/cairo/lib"));
-        tests_basic_mod.linkSystemLibrary("cairo", .{
+        zkk_cairo_mod.addIncludePath(b.path("third-parts/cairo/include"));
+        zkk_cairo_mod.addLibraryPath(b.path("third-parts/cairo/lib"));
+        zkk_cairo_mod.linkSystemLibrary("cairo", .{
             .needed = true,
             .use_pkg_config = .no,
         });
@@ -48,26 +80,51 @@ pub fn build(b: *std.Build) void {
         }
     } else {
         // linux need install cairo: sudo apt install libcairo2-dev
-        tests_basic_mod.linkSystemLibrary("cairo", .{
+        zkk_cairo_mod.linkSystemLibrary("cairo", .{
             .needed = true,
             .use_pkg_config = .force,
         });
         // sudo apt install libX11-dev
-        tests_basic_mod.linkSystemLibrary("X11", .{
+        zkk_cairo_mod.linkSystemLibrary("X11", .{
             .needed = true,
             .use_pkg_config = .yes,
         });
     }
+    zkk_lib_mod.addImport("cairo", zkk_cairo_mod);
 
-    const tests_basic = b.addExecutable(.{
+    // output zkk_lib
+    const zkk_lib_output = b.addSharedLibrary(.{
+        .name = "zkeke",
+        .root_module = zkk_lib_mod,
+    });
+    b.installArtifact(zkk_lib_output);
+
+    // ---------------------------------------
+    // tests 1
+    const tests_hello_mod = b.createModule(.{
+        .root_source_file = b.path("tests/hello.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    tests_hello_mod.addImport("zkeke", zkk_lib_mod);
+    const tests_hello_exe = b.addExecutable(.{
+        .name = "tests_hello",
+        .root_module = tests_hello_mod,
+    });
+    tests_hello_exe.linkLibrary(zkk_lib_output);
+    b.installArtifact(tests_hello_exe);
+    // tests 2
+    const tests_basic_mod = b.createModule(.{
+        .root_source_file = b.path("tests/basic.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    tests_basic_mod.addImport("zkeke", zkk_lib_mod);
+
+    const tests_basic_exe = b.addExecutable(.{
         .name = "tests_basic",
         .root_module = tests_basic_mod,
     });
-    b.installArtifact(tests_basic);
-
-    // uncomment to run if you need
-    const tests_basic_run = b.addRunArtifact(tests_basic);
-    tests_basic_run.setCwd(b.path("zig-out/bin"));
-    const tests_basic_step = b.step("tests_basic", "Run the tests_basic example");
-    tests_basic_step.dependOn(&tests_basic_run.step);
+    tests_basic_exe.linkLibrary(zkk_lib_output);
+    b.installArtifact(tests_basic_exe);
 }

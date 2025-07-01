@@ -11,6 +11,25 @@ git submodule update --init
 zig build
 ```
 
+# demos
+- basic module and usage
+```go
+const std = @import("std");
+const builtin = @import("builtin");
+const comm = @import("zkeke").comm;
+const yoga = @import("zkeke").yoga;
+const qjs = @import("zkeke").quickjs;
+const cairo = @import("zkeke").cairo;
+const window = @import("zkeke").window;
+
+pub fn main() !void {
+    const app = qjs.Quickjs.init();
+    defer app.deinit();
+    _ = app.eval_js_code("console.log('hello world');", false);
+    _ = app.loop();
+}
+```
+
 # quickjs
 - qjs : interactive cmd line tool
 - qjsc : compile js to c code or binary js module
@@ -62,7 +81,7 @@ options are:
 - wrapper yoga cpp to zig struct and interface
 - wrapper quickjs-ng to zig struct and interface
 - wrapper cairo to zig struct and interface 
-- wrapper or design by self to build windows management
+- wrapper windows management
 
 
 

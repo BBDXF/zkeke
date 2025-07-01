@@ -1,15 +1,10 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const comm = @import("comm.zig");
-const yoga = @import("yoga.zig");
-const qjs = @import("quickjs.zig");
-const cairo = @import("cairo.zig");
-const wm =
-    // if (builtin.target.os.tag == .windows) {
-    @import("window_win32.zig");
-// } else {
-// @import("window_linux.zig");
-// };
+const comm = @import("zkeke").comm;
+const yoga = @import("zkeke").yoga;
+const qjs = @import("zkeke").quickjs;
+const cairo = @import("zkeke").cairo;
+const wm = @import("zkeke").window;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -96,7 +91,7 @@ fn testQuickjsBasic(allocator: std.mem.Allocator) !void {
     std.log.info("-------------------------", .{});
 
     // run file
-    const js_demo = @embedFile("tests_basic.js");
+    const js_demo = @embedFile("basic.js");
     _ = app.eval_js_code(js_demo, false);
     _ = app.loop();
 
