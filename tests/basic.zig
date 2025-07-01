@@ -1,6 +1,6 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const comm = @import("zkeke").comm;
+const comm = @import("zkeke").comm.define;
 const yoga = @import("zkeke").yoga;
 const qjs = @import("zkeke").quickjs;
 const cairo = @import("zkeke").cairo;

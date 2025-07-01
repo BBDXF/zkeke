@@ -8,8 +8,9 @@ pub const Events = union(enum) {
     Show,
     Hide,
     Active: bool,
-    Move: define.KKPoint,
-    Resize: define.KKRect,
+    Move: define.KKPosEventInf,
+    Resize: define.KKSizeEventInf,
+    Draw,
     // keyboard
     KeyDown: define.KKKeyEventInf,
     KeyUp: define.KKKeyEventInf,
@@ -21,7 +22,7 @@ pub const Events = union(enum) {
     MouseDblClick: define.KKMouseEventInf,
     MouseWheel: define.KKMouseEventInf,
     // other
-    ContextMenu: define.KKPoint,
+    ContextMenu: define.KKPosEventInf,
     CopyData: void,
     Drops: void,
 };

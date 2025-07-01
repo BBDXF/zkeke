@@ -10,13 +10,13 @@ const Events = @import("comm").Events;
 
 const ZKEKE_CLASS_NAME = "ZkekeWindowClass";
 var gInstance: c.HINSTANCE = undefined;
-var gWinMap = std.HashMap(usize, *Window).init(std.heap.page_allocator);
+var gWinMap = std.AutoHashMap(usize, *Window).init(std.heap.page_allocator);
 
 fn myNativeMouseEvent(uMsg: u32, wParam: c.WPARAM, lParam: c.LPARAM) Events {
-    const x: i32 = @intCast(0xFFFF & lParam);
-    const y: i32 = @intCast(lParam >> 16);
+    const x: i32 = @as(i16, @bitCast(@as(u16, @intCast(0xFFFF & (lParam))))); //@intCast(0xFFFF & lParam);
+    const y: i32 = @as(i16, @bitCast(@as(u16, @intCast(0xFFFF & (lParam >> 16))))); //@intCast(lParam >> 16);
     const btn: u32 = @intCast(0xFFFF & wParam);
-    const delta: i32 = @intCast(wParam >> 16);
+    const delta: i32 = @as(i16, @bitCast(@as(u16, @intCast(0xFFFF & (wParam >> 16)))));
     switch (uMsg) {
         c.WM_RBUTTONDOWN, c.WM_LBUTTONDOWN, c.WM_MBUTTONDOWN => {
             return Events{ .MouseDown = .{ .x = x, .y = y, .button = btn } };
@@ -27,8 +27,11 @@ fn myNativeMouseEvent(uMsg: u32, wParam: c.WPARAM, lParam: c.LPARAM) Events {
         c.WM_MOUSEMOVE => {
             return Events{ .MouseMove = .{ .x = x, .y = y } };
         },
-        c.WM_MOUSEHWHEEL => {
+        c.WM_MOUSEWHEEL => {
             return Events{ .MouseWheel = .{ .x = x, .y = y, .button = btn, .delta = delta } };
+        },
+        c.WM_LBUTTONDBLCLK, c.WM_RBUTTONDBLCLK, c.WM_MBUTTONDBLCLK => {
+            return Events{ .MouseDblClick = .{ .x = x, .y = y, .button = btn } };
         },
         else => {
             unreachable;
@@ -51,8 +54,46 @@ fn myWndProc(hWnd: c.HWND, uMsg: u32, wParam: c.WPARAM, lParam: c.LPARAM) callco
                     return 1;
                 }
             },
-            c.WM_RBUTTONDOWN, c.WM_LBUTTONDOWN, c.WM_MBUTTONDOWN, c.WM_RBUTTONUP, c.WM_LBUTTONUP, c.WM_MBUTTONUP, c.WM_MOUSEHWHEEL => {
+            c.WM_CLOSE => {
+                const ev = Events{ .Close = {} };
+                _ = win.onMessage(ev);
+            },
+            c.WM_LBUTTONDBLCLK, c.WM_RBUTTONDBLCLK, c.WM_MBUTTONDBLCLK, c.WM_RBUTTONDOWN, c.WM_LBUTTONDOWN, c.WM_MBUTTONDOWN, c.WM_RBUTTONUP, c.WM_LBUTTONUP, c.WM_MBUTTONUP, c.WM_MOUSEWHEEL, c.WM_MOUSEMOVE => {
                 const ev = myNativeMouseEvent(uMsg, wParam, lParam);
+                _ = win.onMessage(ev);
+            },
+            c.WM_ERASEBKGND => {
+                return 1;
+            },
+            c.WM_PAINT => {
+                const ev = Events{ .Draw = {} };
+                _ = win.onMessage(ev);
+            },
+            c.WM_MOVE => {
+                const ev = Events{ .Move = .{ .x = @intCast(0xFFFF & lParam), .y = @intCast(0xFFFF & (lParam >> 16)) } };
+                _ = win.onMessage(ev);
+            },
+            c.WM_SIZE => {
+                const ev = Events{ .Resize = .{ .width = @intCast(0xFFFF & lParam), .height = @intCast(0xFFFF & (lParam >> 16)) } };
+                _ = win.onMessage(ev);
+            },
+            c.WM_CHAR, c.WM_SYSCHAR, c.WM_IME_CHAR => {
+                const ev = Events{ .Char = @intCast(0xFFFF & wParam) };
+                _ = win.onMessage(ev);
+            },
+
+            c.WM_KEYDOWN, c.WM_SYSKEYDOWN => {
+                const ctrl = @as(c_int, c.GetKeyState(c.VK_SHIFT)) & 0x8000 != 0;
+                const shift = @as(c_int, c.GetKeyState(c.VK_CONTROL)) & 0x8000 != 0;
+                const alt = @as(c_int, c.GetKeyState(c.VK_MENU)) & 0x8000 != 0;
+                const ev = Events{ .KeyDown = .{ .keyCode = @intCast(0xFFFF & wParam), .ctrl = ctrl, .shift = shift, .alt = alt } };
+                _ = win.onMessage(ev);
+            },
+            c.WM_KEYUP, c.WM_SYSKEYUP => {
+                const ctrl = @as(c_int, c.GetKeyState(c.VK_SHIFT)) & 0x8000 != 0;
+                const shift = @as(c_int, c.GetKeyState(c.VK_CONTROL)) & 0x8000 != 0;
+                const alt = @as(c_int, c.GetKeyState(c.VK_MENU)) & 0x8000 != 0;
+                const ev = Events{ .KeyUp = .{ .keyCode = @intCast(0xFFFF & wParam), .ctrl = ctrl, .shift = shift, .alt = alt } };
                 _ = win.onMessage(ev);
             },
             else => {},
@@ -65,7 +106,7 @@ pub fn appInit() void {
     // register window class
     const wc = c.WNDCLASSEXA{
         .cbSize = @sizeOf(c.WNDCLASSEXA),
-        .style = c.CS_HREDRAW | c.CS_VREDRAW,
+        .style = c.CS_HREDRAW | c.CS_VREDRAW | c.CS_DBLCLKS,
         .lpfnWndProc = myWndProc,
         .hInstance = gInstance,
         .hIcon = null, //c.LoadIconA(null, 32512),
@@ -147,6 +188,9 @@ pub const Window = struct {
         const title_c: [*c]const u8 = @ptrCast(title.ptr);
         _ = c.SetWindowTextA(self.hWnd, title_c);
     }
+    pub fn setFocus(self: *Self) void {
+        _ = c.SetFocus(self.hWnd);
+    }
 
     pub fn onMessage(self: *Self, ev: Events) bool {
         const ptr: usize = @intFromPtr(self.hWnd);
@@ -160,7 +204,9 @@ pub const Window = struct {
             .MouseDown => |info| {
                 std.log.info("win: {d}, mouse down: {d}, {d}, button: {d}", .{ ptr, info.x, info.y, info.button });
             },
-            else => {},
+            else => {
+                std.log.info("win: {d}, {any}", .{ ptr, ev });
+            },
         }
         return true;
     }

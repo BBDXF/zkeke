@@ -36,8 +36,8 @@ pub export fn zkk_quit() void {
     win.appQuit();
 }
 
-pub export fn zkk_win_create(app: *ZkkApp, width: i32, height: i32) *win.Window {
-    win.Window.init(app.allocator, width, height);
+pub export fn zkk_win_create(app: *ZkkApp, width: i32, height: i32) ?*win.Window {
+    return win.Window.init(app.allocator, width, height);
 }
 pub export fn zkk_win_destroy(app: *ZkkApp, w: *win.Window) void {
     _ = app;

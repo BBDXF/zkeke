@@ -14,6 +14,15 @@ pub const KKSizeLimit = struct {
     maxHeight: f32 = -1,
 };
 
+pub const KKPosEventInf = struct {
+    x: i32 = 0,
+    y: i32 = 0,
+};
+pub const KKSizeEventInf = struct {
+    width: i32 = 0,
+    height: i32 = 0,
+};
+
 pub const KKMouseEventInf = struct {
     x: i32 = 0,
     y: i32 = 0,
@@ -21,7 +30,7 @@ pub const KKMouseEventInf = struct {
     delta: i32 = 0,
 };
 pub const KKKeyEventInf = struct {
-    keyCode: u32 = 0,
+    keyCode: u32 = 0, // VK_CODE
     ctrl: bool = false,
     alt: bool = false,
     shift: bool = false,
