@@ -6,9 +6,11 @@ const c = @cImport({
     @cInclude("windowsx.h");
 });
 
+const Events = @import("comm").Events;
+
 const ZKEKE_CLASS_NAME = "ZkekeWindowClass";
 var gInstance: c.HINSTANCE = undefined;
-var gWinMap = std.AutoHashMap(usize, *Window).init(std.heap.page_allocator);
+var gWinMap = std.HashMap(usize, *Window).init(std.heap.page_allocator);
 
 fn myNativeMouseEvent(uMsg: u32, wParam: c.WPARAM, lParam: c.LPARAM) Events {
     const x: i32 = @intCast(0xFFFF & lParam);
@@ -86,53 +88,6 @@ pub fn appRun() void {
         _ = c.DispatchMessageA(&msg);
     }
 }
-
-// Events
-pub const Events = union(enum) {
-    Create,
-    Destroy,
-    Close,
-    Show,
-    Hide,
-    Move: struct {
-        x: i32,
-        y: i32,
-    },
-    Resize: struct {
-        width: i32,
-        height: i32,
-        clientWidth: i32,
-        clientHeight: i32,
-    },
-    KeyDown: struct {
-        keyCode: u32,
-        ctrl: bool,
-        alt: bool,
-        shift: bool,
-    },
-    KeyUp,
-    Char: u32,
-    MouseDown: struct {
-        x: i32,
-        y: i32,
-        button: u32,
-    },
-    MouseUp: struct {
-        x: i32,
-        y: i32,
-        button: u32,
-    },
-    MouseMove: struct {
-        x: i32,
-        y: i32,
-    },
-    MouseWheel: struct {
-        x: i32,
-        y: i32,
-        button: u32,
-        delta: i32,
-    },
-};
 
 // Window
 pub const Window = struct {

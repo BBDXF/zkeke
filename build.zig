@@ -17,6 +17,13 @@ pub fn build(b: *std.Build) void {
     });
 
     // internal use modules
+    // comm
+    const zkk_comm_mod = b.createModule(.{
+        .root_source_file = b.path("src/comm/comm.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    zkk_lib_mod.addImport("comm", zkk_comm_mod);
     // yoga
     const zkk_yoga_mod = b.createModule(.{
         .root_source_file = b.path("src/yoga.zig"),
@@ -25,6 +32,7 @@ pub fn build(b: *std.Build) void {
     });
     zkk_yoga_mod.linkLibrary(yoga_lib);
     zkk_yoga_mod.addIncludePath(b.path("third-parts/yoga/"));
+    zkk_yoga_mod.addImport("comm", zkk_comm_mod);
     zkk_lib_mod.addImport("yoga", zkk_yoga_mod);
     // quickjs
     const zkk_quickjs_mod = b.createModule(.{
@@ -46,6 +54,7 @@ pub fn build(b: *std.Build) void {
     } else {
         zkk_window_mod.root_source_file = b.path("src/window/linux.zig");
     }
+    zkk_window_mod.addImport("comm", zkk_comm_mod);
     zkk_lib_mod.addImport("window", zkk_window_mod);
     // cairo
     const zkk_cairo_mod = b.createModule(.{
@@ -111,7 +120,6 @@ pub fn build(b: *std.Build) void {
         .name = "tests_hello",
         .root_module = tests_hello_mod,
     });
-    tests_hello_exe.linkLibrary(zkk_lib_output);
     b.installArtifact(tests_hello_exe);
     // tests 2
     const tests_basic_mod = b.createModule(.{
@@ -120,11 +128,9 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     tests_basic_mod.addImport("zkeke", zkk_lib_mod);
-
     const tests_basic_exe = b.addExecutable(.{
         .name = "tests_basic",
         .root_module = tests_basic_mod,
     });
-    tests_basic_exe.linkLibrary(zkk_lib_output);
     b.installArtifact(tests_basic_exe);
 }

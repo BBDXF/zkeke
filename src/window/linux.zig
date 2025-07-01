@@ -4,6 +4,8 @@ const c = @cImport({
     @cInclude("X11/Xutil.h");
 });
 
+const Events = @import("comm").Events;
+
 var gDisplay: ?*c.Display = undefined;
 var gScreen: c_ulong = 0;
 var gWinMap = std.AutoHashMap(usize, *Window).init(std.heap.page_allocator);
@@ -33,6 +35,7 @@ pub fn appRun() void {
             c.ClientMessage => {
                 if (event.xclient.data.l[0] == win.wmDelMsg) {
                     std.log.warn("Delete win {d}", .{win.hWnd});
+
                     _ = gWinMap.remove(event.xany.window);
                     _ = c.XUnmapWindow(gDisplay, win.hWnd);
                     _ = c.XDestroyWindow(gDisplay, win.hWnd);

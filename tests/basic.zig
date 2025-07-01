@@ -4,7 +4,7 @@ const comm = @import("zkeke").comm;
 const yoga = @import("zkeke").yoga;
 const qjs = @import("zkeke").quickjs;
 const cairo = @import("zkeke").cairo;
-const wm = @import("zkeke").window;
+const wm = @import("zkeke").win;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};

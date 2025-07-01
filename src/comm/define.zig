@@ -13,6 +13,19 @@ pub const KKSizeLimit = struct {
     minHeight: f32 = -1,
     maxHeight: f32 = -1,
 };
+
+pub const KKMouseEventInf = struct {
+    x: i32 = 0,
+    y: i32 = 0,
+    button: u32 = 0,
+    delta: i32 = 0,
+};
+pub const KKKeyEventInf = struct {
+    keyCode: u32 = 0,
+    ctrl: bool = false,
+    alt: bool = false,
+    shift: bool = false,
+};
 // rect struct
 pub const KKRect = struct {
     x: f32 = 0,

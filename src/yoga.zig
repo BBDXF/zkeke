@@ -2,7 +2,7 @@ const std = @import("std");
 const yoga_lib = @cImport({
     @cInclude("yoga/Yoga.h");
 });
-pub const comm = @import("comm.zig");
+const comm = @import("comm");
 
 pub const Node = struct {
     node: yoga_lib.YGNodeRef = null,
