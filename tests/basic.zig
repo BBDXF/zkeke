@@ -1,10 +1,11 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const comm = @import("zkeke").comm.define;
+const comm = @import("zkeke").comm;
 const yoga = @import("zkeke").yoga;
 const qjs = @import("zkeke").quickjs;
 const cairo = @import("zkeke").cairo;
 const wm = @import("zkeke").win;
+const ui = @import("zkeke").ui;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -37,32 +38,32 @@ fn testYogaBasic(allocator: std.mem.Allocator) !void {
     var node = yoga.Node.init();
     defer node.freeAll();
 
-    node.setWidth(comm.KKLayoutUnitValue.fromPercent(100));
-    node.setHeight(comm.KKLayoutUnitValue.fromFixed(100));
+    node.setWidth(comm.define.KKLayoutUnitValue.fromPercent(100));
+    node.setHeight(comm.define.KKLayoutUnitValue.fromFixed(100));
     node.setFlexDirection(.Row);
 
     var child1 = yoga.Node.init();
     node.addChild(&child1);
-    child1.setWidth(comm.KKLayoutUnitValue.fromPercent(50));
-    child1.setHeight(comm.KKLayoutUnitValue.fromFixed(50));
-    child1.setPadding(comm.KKLayoutEdge.All, comm.KKLayoutUnitValue.fromFixed(10));
-    child1.setBorder(comm.KKLayoutEdge.All, comm.KKLayoutUnitValue.fromFixed(1));
+    child1.setWidth(comm.define.KKLayoutUnitValue.fromPercent(50));
+    child1.setHeight(comm.define.KKLayoutUnitValue.fromFixed(50));
+    child1.setPadding(comm.define.KKLayoutEdge.All, comm.define.KKLayoutUnitValue.fromFixed(10));
+    child1.setBorder(comm.define.KKLayoutEdge.All, comm.define.KKLayoutUnitValue.fromFixed(1));
 
     var child2 = yoga.Node.init();
     node.addChild(&child2);
-    child1.setWidth(comm.KKLayoutUnitValue.fromPercent(50));
-    child1.setHeight(comm.KKLayoutUnitValue.fromFixed(60));
+    child1.setWidth(comm.define.KKLayoutUnitValue.fromPercent(50));
+    child1.setHeight(comm.define.KKLayoutUnitValue.fromFixed(60));
 
     // absolute
     var node2 = yoga.Node.init();
     node.addChild(&node2);
     node2.setPositionType(.Relative);
-    // node2.setPosition(.Left, comm.KKLayoutUnitValue.fromFixed(10));
-    // node2.setPosition(.Top, comm.KKLayoutUnitValue.fromFixed(12));
-    node2.setWidth(comm.KKLayoutUnitValue.fromFixed(111));
-    node2.setHeight(comm.KKLayoutUnitValue.fromFixed(88));
-    node2.setPosition(.Right, comm.KKLayoutUnitValue.fromFixed(20));
-    node2.setPosition(.Bottom, comm.KKLayoutUnitValue.fromFixed(22));
+    // node2.setPosition(.Left, comm.define.KKLayoutUnitValue.fromFixed(10));
+    // node2.setPosition(.Top, comm.define.KKLayoutUnitValue.fromFixed(12));
+    node2.setWidth(comm.define.KKLayoutUnitValue.fromFixed(111));
+    node2.setHeight(comm.define.KKLayoutUnitValue.fromFixed(88));
+    node2.setPosition(.Right, comm.define.KKLayoutUnitValue.fromFixed(20));
+    node2.setPosition(.Bottom, comm.define.KKLayoutUnitValue.fromFixed(22));
 
     node.calculateLayout(400, 200, .LTR);
 
@@ -153,6 +154,12 @@ fn testWindowsBasic(allocator: std.mem.Allocator) !void {
     var wnd = wm.Window.init(allocator, 600, 400) orelse return;
     defer wnd.deinit();
     wnd.setTitle("window 1");
+
+    var root = ui.UiRoot.init(wnd);
+    wnd.setUiRoot(.{
+        .object = @ptrCast(&root),
+        .eventCB = &ui.UiRoot.cbHandleEvent,
+    });
 
     var wnd2 = wm.Window.init(allocator, 600, 400) orelse return;
     defer wnd2.deinit();

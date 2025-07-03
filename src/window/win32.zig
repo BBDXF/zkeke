@@ -4,6 +4,10 @@ const c = @cImport({
     @cDefine("_WIN32_WINNT", "0x0601");
     @cInclude("windows.h");
     @cInclude("windowsx.h");
+
+    //cairo
+    @cInclude("cairo/cairo.h");
+    @cInclude("cairo/cairo-win32.h");
 });
 
 const Events = @import("comm").Events;
@@ -190,6 +194,17 @@ pub const Window = struct {
     }
     pub fn setFocus(self: *Self) void {
         _ = c.SetFocus(self.hWnd);
+    }
+    pub fn getDrawableSize(self: *Self) [2]i32 {
+        var rect: c.RECT = undefined;
+        _ = c.GetClientRect(self.hWnd, &rect);
+        return [2]i32{ rect.right, rect.bottom };
+    }
+    pub fn newSurface(self: *Self) ?*anyopaque {
+        // const sz = self.getDrawableSize();
+        const hdc = c.GetDC(self.hWnd);
+        const surf = c.cairo_win32_surface_create(hdc);
+        return surf;
     }
 
     pub fn onMessage(self: *Self, ev: Events) bool {

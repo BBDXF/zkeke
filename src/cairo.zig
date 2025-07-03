@@ -2,11 +2,6 @@ const std = @import("std");
 const builtin = @import("builtin");
 const c = @cImport({
     @cInclude("cairo/cairo.h");
-    if (builtin.target.os.tag == .windows) {
-        @cInclude("cairo/cairo-win32.h");
-    } else {
-        @cInclude("cairo/cairo-xlib.h");
-    }
 });
 
 pub const Surface = struct {
@@ -22,6 +17,12 @@ pub const Surface = struct {
         const path_c: [*c]const u8 = @ptrCast(path.ptr);
         return Self{
             .surface = c.cairo_image_surface_create_from_png(path_c),
+        };
+    }
+    pub fn initFromSurface(ptr: *anyopaque) Self {
+        const surf: *c.cairo_surface_t = @ptrCast(ptr);
+        return Self{
+            .surface = surf,
         };
     }
     pub fn deinit(self: Self) void {

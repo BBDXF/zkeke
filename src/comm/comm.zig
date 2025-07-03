@@ -42,3 +42,8 @@ pub const Property = union(enum) {
     Decorated: bool,
     Transparent: bool,
 };
+
+pub const UiRootInterface = struct {
+    object: *anyopaque,
+    eventCB: *const fn (ptr: *anyopaque, ev: Events) void,
+};

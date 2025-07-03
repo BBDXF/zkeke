@@ -100,6 +100,16 @@ pub fn build(b: *std.Build) void {
         });
     }
     zkk_lib_mod.addImport("cairo", zkk_cairo_mod);
+    // ui
+    const zkk_ui_mod = b.createModule(.{
+        .root_source_file = b.path("src/ui/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    zkk_ui_mod.addImport("comm", zkk_comm_mod);
+    zkk_ui_mod.addImport("cairo", zkk_cairo_mod);
+    zkk_ui_mod.addImport("window", zkk_window_mod);
+    zkk_lib_mod.addImport("ui", zkk_ui_mod);
 
     // output zkk_lib
     const zkk_lib_output = b.addSharedLibrary(.{
