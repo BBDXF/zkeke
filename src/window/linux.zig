@@ -144,6 +144,7 @@ pub const Window = struct {
     allocator: std.mem.Allocator,
     wmDelMsg: c.Atom,
     uiRootInt: ?comm.UiRootInterface, // UIRoot 事件回调
+    surface: ?*anyopaque,
 
     const Self = @This();
     pub fn init(allocator: std.mem.Allocator, width: i32, height: i32) ?*Self {
@@ -183,6 +184,7 @@ pub const Window = struct {
             .allocator = allocator,
             .wmDelMsg = wmDelMsg,
             .uiRootInt = null,
+            .surface = null,
         };
 
         gWinMap.put(hWnd, win) catch return null;
@@ -200,14 +202,17 @@ pub const Window = struct {
         _ = c.XGetWindowAttributes(gDisplay, self.hWnd, &attrs);
         return [2]i32{ @intCast(attrs.width), @intCast(attrs.height) };
     }
-    pub fn newSurface(self: *Self) *anyopaque {
-        const sz = self.getDrawableSize();
-        const gVisual = c.DefaultVisual(gDisplay, gScreen);
-        const surf = c.cairo_xlib_surface_create(gDisplay, self.hWnd, gVisual, sz[0], sz[1]);
-        return @ptrCast(surf);
+    pub fn getSurface(self: *Self) *anyopaque {
+        return self.surface.?;
     }
     pub fn onMessage(self: *Self, ev: comm.Events) void {
         // std.log.info("onMessage: {d} {any}", .{ self.hWnd, ev });
+        if (ev == .Create) {
+            const sz = self.getDrawableSize();
+            const gVisual = c.DefaultVisual(gDisplay, gScreen);
+            const surf = c.cairo_xlib_surface_create(gDisplay, self.hWnd, gVisual, sz[0], sz[1]);
+            self.surface = @ptrCast(surf);
+        }
         if (self.uiRootInt) |cb| {
             cb.eventCB(cb.object, ev);
         }

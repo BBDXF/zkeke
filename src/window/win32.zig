@@ -10,32 +10,32 @@ const c = @cImport({
     @cInclude("cairo/cairo-win32.h");
 });
 
-const Events = @import("comm").Events;
+const comm = @import("comm");
 
 const ZKEKE_CLASS_NAME = "ZkekeWindowClass";
 var gInstance: c.HINSTANCE = undefined;
 var gWinMap = std.AutoHashMap(usize, *Window).init(std.heap.page_allocator);
 
-fn myNativeMouseEvent(uMsg: u32, wParam: c.WPARAM, lParam: c.LPARAM) Events {
+fn myNativeMouseEvent(uMsg: u32, wParam: c.WPARAM, lParam: c.LPARAM) comm.Events {
     const x: i32 = @as(i16, @bitCast(@as(u16, @intCast(0xFFFF & (lParam))))); //@intCast(0xFFFF & lParam);
     const y: i32 = @as(i16, @bitCast(@as(u16, @intCast(0xFFFF & (lParam >> 16))))); //@intCast(lParam >> 16);
     const btn: u32 = @intCast(0xFFFF & wParam);
     const delta: i32 = @as(i16, @bitCast(@as(u16, @intCast(0xFFFF & (wParam >> 16)))));
     switch (uMsg) {
         c.WM_RBUTTONDOWN, c.WM_LBUTTONDOWN, c.WM_MBUTTONDOWN => {
-            return Events{ .MouseDown = .{ .x = x, .y = y, .button = btn } };
+            return comm.Events{ .MouseDown = .{ .x = x, .y = y, .button = btn } };
         },
         c.WM_RBUTTONUP, c.WM_LBUTTONUP, c.WM_MBUTTONUP => {
-            return Events{ .MouseUp = .{ .x = x, .y = y, .button = btn } };
+            return comm.Events{ .MouseUp = .{ .x = x, .y = y, .button = btn } };
         },
         c.WM_MOUSEMOVE => {
-            return Events{ .MouseMove = .{ .x = x, .y = y } };
+            return comm.Events{ .MouseMove = .{ .x = x, .y = y } };
         },
         c.WM_MOUSEWHEEL => {
-            return Events{ .MouseWheel = .{ .x = x, .y = y, .button = btn, .delta = delta } };
+            return comm.Events{ .MouseWheel = .{ .x = x, .y = y, .button = btn, .delta = delta } };
         },
         c.WM_LBUTTONDBLCLK, c.WM_RBUTTONDBLCLK, c.WM_MBUTTONDBLCLK => {
-            return Events{ .MouseDblClick = .{ .x = x, .y = y, .button = btn } };
+            return comm.Events{ .MouseDblClick = .{ .x = x, .y = y, .button = btn } };
         },
         else => {
             unreachable;
@@ -50,7 +50,7 @@ fn myWndProc(hWnd: c.HWND, uMsg: u32, wParam: c.WPARAM, lParam: c.LPARAM) callco
         // check quit and translate message
         switch (uMsg) {
             c.WM_DESTROY => {
-                const ev = Events{ .Destroy = {} };
+                const ev = comm.Events{ .Destroy = {} };
                 _ = win.onMessage(ev);
                 _ = gWinMap.remove(ptr);
                 if (gWinMap.count() == 0) {
@@ -59,7 +59,7 @@ fn myWndProc(hWnd: c.HWND, uMsg: u32, wParam: c.WPARAM, lParam: c.LPARAM) callco
                 }
             },
             c.WM_CLOSE => {
-                const ev = Events{ .Close = {} };
+                const ev = comm.Events{ .Close = {} };
                 _ = win.onMessage(ev);
             },
             c.WM_LBUTTONDBLCLK, c.WM_RBUTTONDBLCLK, c.WM_MBUTTONDBLCLK, c.WM_RBUTTONDOWN, c.WM_LBUTTONDOWN, c.WM_MBUTTONDOWN, c.WM_RBUTTONUP, c.WM_LBUTTONUP, c.WM_MBUTTONUP, c.WM_MOUSEWHEEL, c.WM_MOUSEMOVE => {
@@ -70,19 +70,20 @@ fn myWndProc(hWnd: c.HWND, uMsg: u32, wParam: c.WPARAM, lParam: c.LPARAM) callco
                 return 1;
             },
             c.WM_PAINT => {
-                const ev = Events{ .Draw = {} };
+                const ev = comm.Events{ .Draw = {} };
                 _ = win.onMessage(ev);
+                return 0;
             },
             c.WM_MOVE => {
-                const ev = Events{ .Move = .{ .x = @intCast(0xFFFF & lParam), .y = @intCast(0xFFFF & (lParam >> 16)) } };
+                const ev = comm.Events{ .Move = .{ .x = @intCast(0xFFFF & lParam), .y = @intCast(0xFFFF & (lParam >> 16)) } };
                 _ = win.onMessage(ev);
             },
             c.WM_SIZE => {
-                const ev = Events{ .Resize = .{ .width = @intCast(0xFFFF & lParam), .height = @intCast(0xFFFF & (lParam >> 16)) } };
+                const ev = comm.Events{ .Resize = .{ .width = @intCast(0xFFFF & lParam), .height = @intCast(0xFFFF & (lParam >> 16)) } };
                 _ = win.onMessage(ev);
             },
             c.WM_CHAR, c.WM_SYSCHAR, c.WM_IME_CHAR => {
-                const ev = Events{ .Char = @intCast(0xFFFF & wParam) };
+                const ev = comm.Events{ .Char = @intCast(0xFFFF & wParam) };
                 _ = win.onMessage(ev);
             },
 
@@ -90,14 +91,14 @@ fn myWndProc(hWnd: c.HWND, uMsg: u32, wParam: c.WPARAM, lParam: c.LPARAM) callco
                 const ctrl = @as(c_int, c.GetKeyState(c.VK_SHIFT)) & 0x8000 != 0;
                 const shift = @as(c_int, c.GetKeyState(c.VK_CONTROL)) & 0x8000 != 0;
                 const alt = @as(c_int, c.GetKeyState(c.VK_MENU)) & 0x8000 != 0;
-                const ev = Events{ .KeyDown = .{ .keyCode = @intCast(0xFFFF & wParam), .ctrl = ctrl, .shift = shift, .alt = alt } };
+                const ev = comm.Events{ .KeyDown = .{ .keyCode = @intCast(0xFFFF & wParam), .ctrl = ctrl, .shift = shift, .alt = alt } };
                 _ = win.onMessage(ev);
             },
             c.WM_KEYUP, c.WM_SYSKEYUP => {
                 const ctrl = @as(c_int, c.GetKeyState(c.VK_SHIFT)) & 0x8000 != 0;
                 const shift = @as(c_int, c.GetKeyState(c.VK_CONTROL)) & 0x8000 != 0;
                 const alt = @as(c_int, c.GetKeyState(c.VK_MENU)) & 0x8000 != 0;
-                const ev = Events{ .KeyUp = .{ .keyCode = @intCast(0xFFFF & wParam), .ctrl = ctrl, .shift = shift, .alt = alt } };
+                const ev = comm.Events{ .KeyUp = .{ .keyCode = @intCast(0xFFFF & wParam), .ctrl = ctrl, .shift = shift, .alt = alt } };
                 _ = win.onMessage(ev);
             },
             else => {},
@@ -140,6 +141,8 @@ pub const Window = struct {
     width: i32,
     height: i32,
     allocator: std.mem.Allocator,
+    uiRootInt: ?comm.UiRootInterface, // UIRoot 事件回调
+    surface: ?*anyopaque,
 
     const Self = @This();
     pub fn init(allocator: std.mem.Allocator, width: i32, height: i32) ?*Self {
@@ -162,7 +165,7 @@ pub const Window = struct {
             return null;
         }
 
-        _ = c.ShowWindow(hWnd, c.SW_SHOW);
+        _ = c.ShowWindow(hWnd, c.SW_SHOWNORMAL);
         _ = c.UpdateWindow(hWnd);
 
         const win = allocator.create(Self) catch return null;
@@ -171,6 +174,8 @@ pub const Window = struct {
             .width = width,
             .height = height,
             .allocator = allocator,
+            .uiRootInt = null,
+            .surface = null,
         };
 
         // set window user data
@@ -178,7 +183,7 @@ pub const Window = struct {
         gWinMap.put(ptr, win) catch {};
 
         // call create event
-        const ev: Events = .{ .Create = {} };
+        const ev: comm.Events = .{ .Create = {} };
         _ = win.onMessage(ev);
 
         return win;
@@ -198,31 +203,48 @@ pub const Window = struct {
     pub fn getDrawableSize(self: *Self) [2]i32 {
         var rect: c.RECT = undefined;
         _ = c.GetClientRect(self.hWnd, &rect);
-        return [2]i32{ rect.right, rect.bottom };
+        return [2]i32{ rect.right - rect.left, rect.bottom - rect.top };
     }
-    pub fn newSurface(self: *Self) ?*anyopaque {
+    pub fn getSurface(self: *Self) *anyopaque {
         // const sz = self.getDrawableSize();
-        const hdc = c.GetDC(self.hWnd);
-        const surf = c.cairo_win32_surface_create(hdc);
-        return surf;
+        return self.surface.?;
     }
 
-    pub fn onMessage(self: *Self, ev: Events) bool {
-        const ptr: usize = @intFromPtr(self.hWnd);
-        switch (ev) {
-            .Create => {
-                std.log.info("win: {d}, create", .{ptr});
-            },
-            .Destroy => {
-                std.log.info("win: {d}, destroy", .{ptr});
-            },
-            .MouseDown => |info| {
-                std.log.info("win: {d}, mouse down: {d}, {d}, button: {d}", .{ ptr, info.x, info.y, info.button });
-            },
-            else => {
-                std.log.info("win: {d}, {any}", .{ ptr, ev });
-            },
+    pub fn invalidate(self: *Self) void {
+        _ = c.InvalidateRect(self.hWnd, null, 1);
+    }
+
+    pub fn onMessage(self: *Self, ev: comm.Events) void {
+        // std.log.info("onMessage: {d} {any}", .{ self.hWnd, ev });
+        if (ev == .Create) {
+            self.setFocus();
+            return;
         }
-        return true;
+        if (ev == .Resize) {
+            self.invalidate();
+            return;
+        }
+
+        var hdc: c.HDC = null;
+        var ps: c.PAINTSTRUCT = undefined;
+        var surf: ?*c.cairo_surface_t = null;
+        if (ev == .Draw) {
+            hdc = c.BeginPaint(self.hWnd, (&ps));
+            // surf = c.cairo_win32_surface_create_with_format(hdc, c.CAIRO_FORMAT_ARGB32);
+            surf = c.cairo_win32_surface_create(hdc);
+            self.surface = @ptrCast(surf);
+
+            std.log.info("Draw {any}", .{self.surface});
+        }
+        if (self.uiRootInt) |cb| {
+            cb.eventCB(cb.object, ev);
+        }
+        if (ev == .Draw) {
+            // c.cairo_surface_destroy(surf);
+            _ = c.EndPaint(self.hWnd, (&ps));
+        }
+    }
+    pub fn setUiRoot(self: *Self, interface: comm.UiRootInterface) void {
+        self.uiRootInt = interface;
     }
 };

@@ -51,6 +51,7 @@ pub fn build(b: *std.Build) void {
     });
     if (target.result.os.tag == .windows) {
         zkk_window_mod.root_source_file = b.path("src/window/win32.zig");
+        zkk_window_mod.addIncludePath(b.path("third-parts/cairo/include"));
     } else {
         zkk_window_mod.root_source_file = b.path("src/window/linux.zig");
     }

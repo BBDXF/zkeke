@@ -4,16 +4,16 @@ const win = @import("window");
 const comm = @import("comm");
 
 pub const UiRoot = struct {
-    surface: cairo.Surface,
+    // surface: cairo.Surface,
     w: *win.Window,
 
     var ptList = std.ArrayList(comm.define.KKPoint).init(std.heap.page_allocator);
 
     const Self = @This();
     pub fn init(w: *win.Window) Self {
-        const surf = cairo.Surface.initFromSurface(w.newSurface());
+        // const surf = cairo.Surface.initFromSurface(w.getSurface());
         return Self{
-            .surface = surf,
+            // .surface = surf,
             .w = w,
         };
     }
@@ -22,7 +22,9 @@ pub const UiRoot = struct {
     }
 
     pub fn render(self: *Self) void {
-        var ctx = cairo.Context.init(&self.surface);
+        const surf = cairo.Surface.initFromSurface(self.w.getSurface());
+        defer surf.deinit();
+        var ctx = cairo.Context.init(&surf);
         defer ctx.deinit();
         ctx.setSourceRGB(0.5, 0.5, 0.5);
         ctx.paint();
@@ -31,6 +33,7 @@ pub const UiRoot = struct {
         for (ptList.items) |pt| {
             // ctx.moveTo(pt.x, pt.y);
             ctx.lineTo(pt.x, pt.y);
+            // std.log.info("pt: {d}, {d}", .{ pt.x, pt.y });
         }
         ctx.stroke();
 
@@ -51,8 +54,7 @@ pub const UiRoot = struct {
                 }) catch unreachable;
 
                 std.log.info("MouseDown: {d}, {d}", .{ ev.MouseDown.x, ev.MouseDown.y });
-
-                self.render();
+                self.w.invalidate();
             },
             .Draw => {
                 self.render();

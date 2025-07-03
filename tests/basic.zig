@@ -161,9 +161,9 @@ fn testWindowsBasic(allocator: std.mem.Allocator) !void {
         .eventCB = &ui.UiRoot.cbHandleEvent,
     });
 
-    var wnd2 = wm.Window.init(allocator, 600, 400) orelse return;
-    defer wnd2.deinit();
-    wnd2.setTitle("window 2");
+    // var wnd2 = wm.Window.init(allocator, 600, 400) orelse return;
+    // defer wnd2.deinit();
+    // wnd2.setTitle("window 2");
 
     wm.appRun();
 }
