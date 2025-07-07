@@ -22,8 +22,9 @@ pub const UiRoot = struct {
     }
 
     pub fn render(self: *Self) void {
-        const surf = cairo.Surface.initFromSurface(self.w.getSurface());
-        defer surf.deinit();
+        const w_surf = self.w.getSurface() orelse return;
+        const surf = cairo.Surface.initFromSurface(w_surf);
+        // defer surf.deinit();
         var ctx = cairo.Context.init(&surf);
         defer ctx.deinit();
         ctx.setSourceRGB(0.5, 0.5, 0.5);
@@ -46,6 +47,7 @@ pub const UiRoot = struct {
     }
 
     pub fn handleEvent(self: *Self, ev: comm.Events) void {
+        // std.log.info("handle event: {any}", .{ev});
         switch (ev) {
             .MouseDown => {
                 ptList.append(comm.define.KKPoint{

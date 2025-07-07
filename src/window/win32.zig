@@ -205,9 +205,9 @@ pub const Window = struct {
         _ = c.GetClientRect(self.hWnd, &rect);
         return [2]i32{ rect.right - rect.left, rect.bottom - rect.top };
     }
-    pub fn getSurface(self: *Self) *anyopaque {
+    pub fn getSurface(self: *Self) ?*anyopaque {
         // const sz = self.getDrawableSize();
-        return self.surface.?;
+        return self.surface;
     }
 
     pub fn invalidate(self: *Self) void {
@@ -221,6 +221,10 @@ pub const Window = struct {
             return;
         }
         if (ev == .Resize) {
+            // skip no change
+            if (ev.Resize.width == self.width or ev.Resize.height == self.height) {
+                return;
+            }
             self.invalidate();
             return;
         }
@@ -240,7 +244,7 @@ pub const Window = struct {
             cb.eventCB(cb.object, ev);
         }
         if (ev == .Draw) {
-            // c.cairo_surface_destroy(surf);
+            c.cairo_surface_destroy(surf);
             _ = c.EndPaint(self.hWnd, (&ps));
         }
     }

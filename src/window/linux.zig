@@ -188,6 +188,11 @@ pub const Window = struct {
         };
 
         gWinMap.put(hWnd, win) catch return null;
+
+        // call create event
+        const ev: comm.Events = .{ .Create = {} };
+        _ = win.onMessage(ev);
+
         return win;
     }
     pub fn deinit(self: *Self) void {
@@ -202,8 +207,8 @@ pub const Window = struct {
         _ = c.XGetWindowAttributes(gDisplay, self.hWnd, &attrs);
         return [2]i32{ @intCast(attrs.width), @intCast(attrs.height) };
     }
-    pub fn getSurface(self: *Self) *anyopaque {
-        return self.surface.?;
+    pub fn getSurface(self: *Self) ?*anyopaque {
+        return self.surface;
     }
     pub fn onMessage(self: *Self, ev: comm.Events) void {
         // std.log.info("onMessage: {d} {any}", .{ self.hWnd, ev });
@@ -213,11 +218,42 @@ pub const Window = struct {
             const surf = c.cairo_xlib_surface_create(gDisplay, self.hWnd, gVisual, sz[0], sz[1]);
             self.surface = @ptrCast(surf);
         }
+        if (ev == .Resize) {
+            // skip no change
+            if (ev.Resize.width == self.width or ev.Resize.height == self.height) {
+                return;
+            }
+            // new surface
+            self.width = ev.Resize.width;
+            self.height = ev.Resize.height;
+            var surf: ?*c.cairo_surface_t = @ptrCast(self.surface);
+            c.cairo_surface_destroy(surf);
+            const gVisual = c.DefaultVisual(gDisplay, gScreen);
+            surf = c.cairo_xlib_surface_create(gDisplay, self.hWnd, gVisual, self.width, self.height);
+            self.surface = @ptrCast(surf);
+        }
         if (self.uiRootInt) |cb| {
             cb.eventCB(cb.object, ev);
         }
     }
     pub fn setUiRoot(self: *Self, interface: comm.UiRootInterface) void {
         self.uiRootInt = interface;
+    }
+
+    pub fn invalidate(self: *Self) void {
+        // _ = c.XClearWindow(gDisplay, self.hWnd);
+        // _ = c.XFlush(gDisplay);
+        var ev = c.XExposeEvent{
+            .type = c.Expose,
+            .display = gDisplay,
+            .window = self.hWnd,
+            .x = 0,
+            .y = 0,
+            .width = @intCast(self.width),
+            .height = @intCast(self.height),
+            .count = 0,
+        };
+        _ = c.XSendEvent(gDisplay, self.hWnd, 0, c.ExposureMask, @ptrCast(&ev));
+        _ = c.XFlush(gDisplay);
     }
 };
