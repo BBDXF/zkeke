@@ -61,6 +61,9 @@ pub const KKRect = struct {
         self.width = width;
         self.height = height;
     }
+    pub fn isInside(self: Self, x: f32, y: f32) bool {
+        return x >= self.x and x <= self.x + self.width and y >= self.y and y <= self.y + self.height;
+    }
 };
 
 // border rect struct

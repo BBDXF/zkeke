@@ -156,6 +156,11 @@ fn testWindowsBasic(allocator: std.mem.Allocator) !void {
     wnd.setTitle("window 1");
 
     var root = ui.UiRoot.init(wnd);
+
+    var ui2 = ui.UIBase.init(200, 200);
+    const ui2_w = ui.UiInterfaceWrapper(ui.UIBase, &ui2);
+    root.uiRoot.addChildren(ui2_w, 0);
+
     wnd.setUiRoot(.{
         .object = @ptrCast(&root),
         .eventCB = &ui.UiRoot.cbHandleEvent,

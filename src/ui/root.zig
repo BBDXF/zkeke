@@ -2,41 +2,52 @@ const std = @import("std");
 const cairo = @import("cairo");
 const win = @import("window");
 const comm = @import("comm");
+const uibase = @import("base.zig");
+pub const UIBase = uibase.UIBase;
+pub const UiInterface = uibase.UiInterface;
+pub const UiInterfaceWrapper = uibase.UiInterfaceWrapper;
+
+pub const UILookupInf = struct {
+    // root: ?UiInterface = null,
+    // offset_x: i32 = 0, // root relative
+    // offset_y: i32 = 0,
+    x: f32 = 0, // x relative
+    y: f32 = 0,
+};
 
 pub const UiRoot = struct {
     // surface: cairo.Surface,
     w: *win.Window,
-
-    var ptList = std.ArrayList(comm.define.KKPoint).init(std.heap.page_allocator);
+    uiBase: uibase.UIBase,
+    uiRoot: uibase.UiInterface,
 
     const Self = @This();
     pub fn init(w: *win.Window) Self {
-        // const surf = cairo.Surface.initFromSurface(w.getSurface());
+        var ui = uibase.UIBase.init(w.width, w.height);
         return Self{
             // .surface = surf,
             .w = w,
+            .uiBase = ui,
+            .uiRoot = uibase.UiInterfaceWrapper(uibase.UIBase, &ui),
         };
     }
     pub fn deinit(self: *Self) void {
-        self.surface.deinit();
+        _ = self;
     }
 
     pub fn render(self: *Self) void {
         const w_surf = self.w.getSurface() orelse return;
-        const surf = cairo.Surface.initFromSurface(w_surf);
+        var surf = cairo.Surface.initFromSurface(w_surf);
         // defer surf.deinit();
-        var ctx = cairo.Context.init(&surf);
-        defer ctx.deinit();
-        ctx.setSourceRGB(0.5, 0.5, 0.5);
-        ctx.paint();
-        ctx.setLineWidth(2);
-        ctx.setSourceRGB(1.0, 0.0, 0.0);
-        for (ptList.items) |pt| {
-            // ctx.moveTo(pt.x, pt.y);
-            ctx.lineTo(pt.x, pt.y);
-            // std.log.info("pt: {d}, {d}", .{ pt.x, pt.y });
+        // root
+        self.uiRoot.render(&surf);
+        // child
+        const count: usize = @intCast(self.uiRoot.getChildrenCount());
+        for (0..count) |i| {
+            if (self.uiRoot.getChildren(@intCast(i))) |item| {
+                item.render(&surf);
+            }
         }
-        ctx.stroke();
 
         std.log.info("rendering", .{});
     }
@@ -46,17 +57,36 @@ pub const UiRoot = struct {
         self.handleEvent(ev);
     }
 
+    fn lookupUIByPos(root: uibase.UiInterface, inf: UILookupInf) ?uibase.UiInterface {
+        var i = root.getChildrenCount();
+        while (i > 0) : (i -= 1) {
+            if (root.getChildren(i - 1)) |item| {
+                if (item.getRect().isInside(inf.x, inf.y)) {
+                    if (item.getChildrenCount() > 0) {
+                        return lookupUIByPos(item, .{
+                            .x = inf.x - item.getRect().x,
+                            .y = inf.y - item.getRect().y,
+                        });
+                    } else {
+                        return item;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     pub fn handleEvent(self: *Self, ev: comm.Events) void {
         // std.log.info("handle event: {any}", .{ev});
         switch (ev) {
-            .MouseDown => {
-                ptList.append(comm.define.KKPoint{
-                    .x = @floatFromInt(ev.MouseDown.x),
-                    .y = @floatFromInt(ev.MouseDown.y),
-                }) catch unreachable;
-
-                std.log.info("MouseDown: {d}, {d}", .{ ev.MouseDown.x, ev.MouseDown.y });
-                self.w.invalidate();
+            .MouseDown, .MouseUp, .MouseMove, .MouseWheel, .MouseDblClick => |mev| {
+                // std.log.info("mouse event: {any}", .{mev});
+                if (lookupUIByPos(self.uiRoot, .{
+                    .x = @floatFromInt(mev.x),
+                    .y = @floatFromInt(mev.y),
+                })) |item| {
+                    item.onUpdate(ev);
+                }
             },
             .Draw => {
                 self.render();

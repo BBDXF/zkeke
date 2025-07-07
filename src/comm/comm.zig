@@ -25,16 +25,19 @@ pub const Events = union(enum) {
     ContextMenu: define.KKPosEventInf,
     CopyData: void,
     Drops: void,
+
+    // UI
+    Property: Property, // css property change
 };
 
 // Properties
 pub const Property = union(enum) {
     Title: []const u8,
     Icon: []const u8,
-    Size: define.KKSize,
+    Size: define.KKSizeEventInf,
     Position: define.KKPoint,
-    MinSize: define.KKSize,
-    MaxSize: define.KKSize,
+    MinSize: define.KKSizeEventInf,
+    MaxSize: define.KKSizeEventInf,
     Resizable: bool,
     Fullscreen: bool,
     Visible: bool,
